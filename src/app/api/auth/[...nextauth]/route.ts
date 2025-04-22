@@ -29,7 +29,7 @@ export const authOptions = {
           };
         }
 
-        return null; // authentication failed
+        return null;
       },
     }),
   ],
@@ -39,7 +39,7 @@ export const authOptions = {
   session: {
     strategy: "jwt" as const,
   },
-  secret: process.env.NEXTAUTH_SECRET,
+  secret: process.env.NEXTAUTH_SECRET || "your-random-secret", // fallback for local testing
 };
 
 const handler = NextAuth(authOptions);
