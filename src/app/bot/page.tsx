@@ -1,8 +1,11 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
+import { analyzeEmotion } from "../utils/emotionAnalysis";
 import { checkForCrisis } from "../panic_words";
+import { Mic, Send } from "lucide-react";
+import { InteractiveHoverButton } from "@/components/magicui/interactive-hover-button";
 
 type Props = {
   user?: {
@@ -11,14 +14,6 @@ type Props = {
     image?: string | null;
   };
 };
-
-// Voice Input Types
-interface CustomSpeechRecognitionEvent extends Event {
-  results: SpeechRecognitionResultList;
-}
-interface CustomSpeechRecognitionErrorEvent extends Event {
-  error: string;
-}
 
 type Message = {
   role: "user" | "assistant" | "system";
@@ -31,54 +26,53 @@ export default function ChatClient({ user }: Props) {
   const [streamingMessage, setStreamingMessage] = useState("");
   const [isStreaming, setIsStreaming] = useState(false);
   const [crisisDetected, setCrisisDetected] = useState(false);
-  const [speakEnabled, setSpeakEnabled] = useState(true);
+  const [speakEnabled, setSpeakEnabled] = useState(false);
 
-  // Voice Output
   const speakText = (text: string) => {
     if (!speakEnabled) return;
     const utterance = new SpeechSynthesisUtterance(text);
     utterance.lang = "en-US";
-    utterance.rate = 1;
-    utterance.pitch = 1;
     speechSynthesis.speak(utterance);
   };
 
-  // Voice Input
   const startVoiceInput = () => {
     const SpeechRecognition =
       (window as any).SpeechRecognition ||
       (window as any).webkitSpeechRecognition;
+
     if (!SpeechRecognition) {
-      alert("Speech recognition is not supported in this browser.");
+      alert("Speech recognition not supported.");
       return;
     }
 
     const recognition = new SpeechRecognition();
     recognition.lang = "en-US";
-    recognition.interimResults = false;
-    recognition.maxAlternatives = 1;
 
-    recognition.onresult = (event: Event) => {
-      const speechEvent = event as CustomSpeechRecognitionEvent;
-      const transcript = speechEvent.results[0][0].transcript;
+    recognition.onresult = (event: any) => {
+      const transcript = event.results[0][0].transcript;
       setInput(transcript);
-      sendMessage(transcript); // auto-send after speech input
-    };
-
-    recognition.onerror = (event: Event) => {
-      const errorEvent = event as CustomSpeechRecognitionErrorEvent;
-      console.error("Speech recognition error:", errorEvent.error);
+      sendMessage(transcript);
     };
 
     recognition.start();
   };
 
-  // Updated to optionally accept value (for speech input)
   const sendMessage = async (value?: string) => {
     const content = value ?? input;
     if (!content.trim()) return;
 
-    // Crisis detection
+    const emotion = analyzeEmotion(content);
+    const userKey = user?.email || "guest";
+    const logs = JSON.parse(localStorage.getItem("emotionLogs") || "{}");
+
+    localStorage.setItem(
+      "emotionLogs",
+      JSON.stringify({
+        ...logs,
+        [userKey]: [...(logs[userKey] || []), emotion],
+      })
+    );
+
     if (checkForCrisis(content)) {
       setCrisisDetected(true);
       return;
@@ -87,14 +81,15 @@ export default function ChatClient({ user }: Props) {
 
     const systemPrompt: Message = {
       role: "system",
-      content: `You are a compassionate, supportive mental health companion. Your role is to help users feel heard, valued, and emotionally supported. Always respond with empathy, kindness, and calm language. Use active listening, validate emotions, and gently encourage self-reflection. Avoid diagnosing or giving medical advice. If a user is in crisis, encourage them to seek immediate help from a mental health professional or call a crisis helpline. Your role is to help users feel heard, valued, and emotionally supported. Respond like a calm, kind human friend. Keep your answers short and natural unless the user needs detailed help, like mental exercises or calming techniques.`,
+      content: `You are a compassionate, supportive mental health companion...`,
     };
 
-    const baseMessages = messages.find((m) => m.role === "system")
-      ? messages
-      : [systemPrompt, ...messages];
-
-    const newMessages: Message[] = [...baseMessages, { role: "user", content }];
+    const newMessages: Message[] = [
+      ...(messages.find((m) => m.role === "system")
+        ? messages
+        : [systemPrompt, ...messages]),
+      { role: "user", content },
+    ];
 
     setMessages(newMessages);
     setInput("");
@@ -103,10 +98,7 @@ export default function ChatClient({ user }: Props) {
 
     const res = await fetch("/api/chat", {
       method: "POST",
-      body: JSON.stringify({
-        model: "yeco",
-        messages: newMessages,
-      }),
+      body: JSON.stringify({ model: "yeco", messages: newMessages }),
     });
 
     const reader = res.body?.getReader();
@@ -126,7 +118,7 @@ export default function ChatClient({ user }: Props) {
             setStreamingMessage(fullText);
           }
         } catch (err) {
-          console.error("Streaming parse error:", err);
+          console.error("Streaming error:", err);
         }
       }
     }
@@ -134,79 +126,87 @@ export default function ChatClient({ user }: Props) {
     setMessages([...newMessages, { role: "assistant", content: fullText }]);
     setStreamingMessage("");
     setIsStreaming(false);
-    speakText(fullText); // speak the final AI message
+    speakText(fullText);
   };
 
   return (
-    <main className="max-w-2xl mx-auto p-4">
-      <h1 className="text-2xl font-bold mb-4">🧠 CalmConnect</h1>
+    <main className="min-h-screen bg-gradient-to-br from-[#0f172a] to-[#1e293b] text-white flex flex-col items-center px-4 py-6">
+      <div className="w-full max-w-3xl space-y-6">
+        <h1 className="text-3xl font-bold text-center">🧠 YECO</h1>
 
-      {/* Crisis Alert */}
-      {crisisDetected && (
-        <div className="mb-4 p-4 border border-red-600 bg-red-100 text-red-800 rounded shadow">
-          <strong>🚨 Crisis Detected:</strong> It seems like you&apos;re going
-          through a very difficult time. You are not alone. Please reach out to
-          a mental health professional or call a crisis helpline immediately.
-        </div>
-      )}
-
-      {/* Chat Box */}
-      <div className="border p-4 h-96 overflow-y-auto rounded mb-4 bg-white shadow">
-        {messages
-          .filter((msg) => msg.role !== "system")
-          .map((msg, idx) => (
-            <p
-              key={idx}
-              className={
-                msg.role === "user" ? "text-blue-700" : "text-green-700"
-              }
-            >
-              <strong>{msg.role === "user" ? "You" : "AI"}:</strong>{" "}
-              {msg.content}
-            </p>
-          ))}
-        {isStreaming && (
-          <p className="text-green-700">
-            <strong>AI:</strong> {streamingMessage}
-            <span className="animate-pulse">▍</span>
-          </p>
+        {crisisDetected && (
+          <div className="bg-red-600 text-white text-sm px-4 py-3 rounded-lg">
+            🚨 Crisis detected! Please seek immediate professional help or
+            contact a helpline.
+          </div>
         )}
-      </div>
 
-      {/* Input & Buttons */}
-      <div className="flex gap-2">
-        <input
-          type="text"
-          value={input}
-          placeholder="How are you feeling today?"
-          className="flex-grow px-3 py-2 border rounded"
-          onChange={(e) => setInput(e.target.value)}
-        />
-        <button
-          onClick={() => sendMessage()}
-          className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
-        >
-          Send
-        </button>
-        <button
-          onClick={startVoiceInput}
-          className="bg-gray-200 px-3 py-2 rounded hover:bg-gray-300 text-black"
-        >
-          🎤 Speak
-        </button>
-      </div>
-      {/* Toggle Speak */}
-      <div className="mb-4 flex items-center gap-2">
-        <input
-          type="checkbox"
-          id="toggle-speech"
-          checked={speakEnabled}
-          onChange={(e) => setSpeakEnabled(e.target.checked)}
-          className="accent-blue-600"
-        />
-        <label htmlFor="toggle-speech" className="text-sm">
-          🔊 Enable Voice Output
+        <div className="bg-gray-800 rounded-xl h-[400px] overflow-y-auto p-4 space-y-3 shadow-lg">
+          {messages
+            .filter((m) => m.role !== "system")
+            .map((msg, idx) => (
+              <div
+                key={idx}
+                className={`text-sm p-2 rounded-md ${
+                  msg.role === "user"
+                    ? "bg-blue-700/30 self-end"
+                    : "bg-green-700/30 self-start"
+                }`}
+              >
+                <span className="block font-semibold">
+                  {msg.role === "user" ? "You" : "AI"}
+                </span>
+                <span>{msg.content}</span>
+              </div>
+            ))}
+          {isStreaming && (
+            <div className="text-green-400 animate-pulse">
+              <strong>AI:</strong> {streamingMessage}
+            </div>
+          )}
+        </div>
+
+        <div className="flex items-center gap-2">
+          <input
+            type="text"
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            placeholder="Share your thoughts..."
+            className="flex-grow px-4 py-2 bg-gray-700 text-white rounded-lg border border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+          <button
+            onClick={() => sendMessage()}
+            className="bg-blue-600 p-2 rounded-lg hover:bg-blue-700 transition"
+            title="Send"
+          >
+            <Send size={20} />
+          </button>
+          <button
+            onClick={startVoiceInput}
+            className="bg-gray-600 p-2 rounded-lg hover:bg-gray-500 transition"
+            title="Voice input"
+          >
+            <Mic size={20} />
+          </button>
+        </div>
+
+        <label className="flex items-center gap-2 text-sm text-gray-300">
+          <input
+            type="checkbox"
+            checked={speakEnabled}
+            onChange={(e) => setSpeakEnabled(e.target.checked)}
+            className="accent-blue-500"
+          />
+          🔊 Voice Output
         </label>
+
+        <div className="text-left text-sm">
+          <Link href="/mood" className=" text-sm">
+            <InteractiveHoverButton className="bg-gray-800">
+              📊 Mood
+            </InteractiveHoverButton>
+          </Link>
+        </div>
       </div>
     </main>
   );
