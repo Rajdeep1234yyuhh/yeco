@@ -1,11 +1,11 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import Link from "next/link";
 import { useState } from "react";
 import { analyzeEmotion } from "../utils/emotionAnalysis";
 import { checkForCrisis } from "../panic_words";
-import { Mic, Send } from "lucide-react";
-import { InteractiveHoverButton } from "@/components/magicui/interactive-hover-button";
+import { Mic, Send, Volume2, BarChart2 } from "lucide-react";
 
 type Props = {
   user?: {
@@ -27,6 +27,8 @@ export default function ChatClient({ user }: Props) {
   const [isStreaming, setIsStreaming] = useState(false);
   const [crisisDetected, setCrisisDetected] = useState(false);
   const [speakEnabled, setSpeakEnabled] = useState(false);
+  const [isListening, setIsListening] = useState(false);
+  const [interimTranscript, setInterimTranscript] = useState("");
 
   const speakText = (text: string) => {
     if (!speakEnabled) return;
@@ -47,11 +49,36 @@ export default function ChatClient({ user }: Props) {
 
     const recognition = new SpeechRecognition();
     recognition.lang = "en-US";
+    recognition.interimResults = true;
+
+    recognition.onstart = () => {
+      setIsListening(true);
+      setInterimTranscript("");
+    };
+
+    recognition.onend = () => {
+      setIsListening(false);
+    };
 
     recognition.onresult = (event: any) => {
-      const transcript = event.results[0][0].transcript;
-      setInput(transcript);
-      sendMessage(transcript);
+      let finalTranscript = "";
+      let interim = "";
+
+      for (let i = event.resultIndex; i < event.results.length; i++) {
+        const transcript = event.results[i][0].transcript;
+        if (event.results[i].isFinal) {
+          finalTranscript += transcript;
+        } else {
+          interim += transcript;
+        }
+      }
+
+      if (finalTranscript) {
+        setInput(finalTranscript);
+        sendMessage(finalTranscript);
+      } else {
+        setInterimTranscript(interim);
+      }
     };
 
     recognition.start();
@@ -161,7 +188,7 @@ export default function ChatClient({ user }: Props) {
             ))}
           {isStreaming && (
             <div className="text-green-400 animate-pulse">
-              <strong>AI:</strong> {streamingMessage}
+              <strong>YECO:</strong> {streamingMessage}
             </div>
           )}
         </div>
@@ -174,6 +201,7 @@ export default function ChatClient({ user }: Props) {
             placeholder="Share your thoughts..."
             className="flex-grow px-4 py-2 bg-gray-700 text-white rounded-lg border border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
+
           <button
             onClick={() => sendMessage()}
             className="bg-blue-600 p-2 rounded-lg hover:bg-blue-700 transition"
@@ -181,32 +209,48 @@ export default function ChatClient({ user }: Props) {
           >
             <Send size={20} />
           </button>
+
           <button
             onClick={startVoiceInput}
-            className="bg-gray-600 p-2 rounded-lg hover:bg-gray-500 transition"
+            className={`p-2 rounded-lg transition ${
+              isListening
+                ? "bg-red-600 animate-pulse"
+                : "bg-gray-600 hover:bg-gray-500"
+            }`}
             title="Voice input"
           >
-            <Mic size={20} />
+            <Mic size={20} className={isListening ? "animate-bounce" : ""} />
           </button>
-        </div>
 
-        <label className="flex items-center gap-2 text-sm text-gray-300">
-          <input
-            type="checkbox"
-            checked={speakEnabled}
-            onChange={(e) => setSpeakEnabled(e.target.checked)}
-            className="accent-blue-500"
-          />
-          🔊 Voice Output
-        </label>
+          <button
+            onClick={() => setSpeakEnabled(!speakEnabled)}
+            className={`p-2 rounded-lg transition ${
+              speakEnabled
+                ? "bg-yellow-600 hover:bg-yellow-500"
+                : "bg-gray-600 hover:bg-gray-500"
+            }`}
+            title="Toggle Voice Output"
+          >
+            <Volume2 size={20} />
+          </button>
 
-        <div className="text-left text-sm">
-          <Link href="/mood" className=" text-sm">
-            <InteractiveHoverButton className="bg-gray-800">
-              📊 Mood
-            </InteractiveHoverButton>
+          <Link href="/mood" passHref legacyBehavior>
+            <a
+              target="_blank"
+              rel="noopener noreferrer"
+              className="p-2 rounded-lg bg-gray-600 hover:bg-gray-500 transition"
+              title="View Mood Graph"
+            >
+              <BarChart2 size={20} />
+            </a>
           </Link>
         </div>
+
+        {isListening && (
+          <p className="text-sm text-blue-300 mt-2 animate-pulse">
+            🎙️ Listening... <span className="italic">{interimTranscript}</span>
+          </p>
+        )}
       </div>
     </main>
   );
