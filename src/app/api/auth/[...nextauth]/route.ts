@@ -1,9 +1,13 @@
-// app/api/auth/[...nextauth]/route.ts
 import NextAuth from "next-auth";
+import GoogleProvider from "next-auth/providers/google";
 import CredentialsProvider from "next-auth/providers/credentials";
 
 export const authOptions = {
   providers: [
+    GoogleProvider({
+      clientId: process.env.GOOGLE_CLIENT_ID!,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+    }),
     CredentialsProvider({
       name: "Credentials",
       credentials: {
@@ -34,12 +38,14 @@ export const authOptions = {
     }),
   ],
   pages: {
-    signIn: "/login",
+    signIn: "/login", // You can change this to your custom sign-in page if needed
   },
   session: {
     strategy: "jwt" as const,
   },
-  secret: process.env.NEXTAUTH_SECRET || "your-random-secret", // fallback for local testing
+  secret:
+    process.env.NEXTAUTH_SECRET ||
+    "QdklurCCRZhrFrkFodnW3K7FwQfsHMBodHeDLALkmgQ=", // Fallback for local testing
 };
 
 const handler = NextAuth(authOptions);
