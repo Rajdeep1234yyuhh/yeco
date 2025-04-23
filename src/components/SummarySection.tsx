@@ -1,41 +1,32 @@
 "use client";
 import React from "react";
-import {
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  Tooltip,
-  CartesianGrid,
-  ResponsiveContainer,
-} from "recharts";
 
-type GraphSectionProps = {
+type SummarySectionProps = {
   title: string;
   data: {
     label: string;
     avg: number;
-    date?: string; // for filtering hourly mood
+    date?: string; // for hourly mood
   }[];
   visible: boolean;
   toggleSection: () => void;
   selectedDate: string;
-  setSelectedDate?: (date: string) => void;
+  setSelectedDate?: (date: string) => void; // optional
 };
 
-export default function GraphSection({
+export default function SummarySection({
   title,
   data,
   visible,
   toggleSection,
   selectedDate,
   setSelectedDate,
-}: GraphSectionProps) {
+}: SummarySectionProps) {
+  // For hourly mood only: filter by selectedDate
   const isHourly = title.includes("Hourly");
-
   const filteredData =
     isHourly && selectedDate
-      ? data.filter((d) => d.label.includes(selectedDate))
+      ? data.filter((item) => item.label.includes(selectedDate))
       : data;
 
   return (
@@ -63,20 +54,14 @@ export default function GraphSection({
       )}
 
       {visible && (
-        <ResponsiveContainer width="100%" height={300}>
-          <LineChart data={filteredData}>
-            <CartesianGrid strokeDasharray="3 3" />
-            <XAxis reversed dataKey="label" />
-            <YAxis domain={[0, 1]} />
-            <Tooltip />
-            <Line
-              type="monotone"
-              dataKey="avg"
-              stroke="#82ca9d"
-              strokeWidth={2}
-            />
-          </LineChart>
-        </ResponsiveContainer>
+        <ul className="space-y-2">
+          {filteredData.map((item, index) => (
+            <li key={index} className="flex justify-between">
+              <span>{item.label}</span>
+              <span className="font-bold">{item.avg}</span>
+            </li>
+          ))}
+        </ul>
       )}
     </div>
   );
