@@ -1,26 +1,31 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
-import Link from "next/link";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useSession, signOut } from "next-auth/react"; // ⬅️ Updated line
+import { useRouter } from "next/navigation";
+
 import { analyzeEmotion } from "../utils/emotionAnalysis";
 import { checkForCrisis } from "../panic_words";
-import { Mic, Send, Volume2, BarChart2 } from "lucide-react";
+import ChatBox from "../../components/ChatBox";
+import ChatInput from "../../components/ChatInput";
+import CrisisAlert from "../../components/CrisisAlert";
 
-type Props = {
-  user?: {
-    name?: string | null;
-    email?: string | null;
-    image?: string | null;
-  };
-};
-
-type Message = {
+export type Message = {
   role: "user" | "assistant" | "system";
   content: string;
 };
 
-export default function ChatClient({ user }: Props) {
+export default function ChatClient() {
+  const { data: session, status } = useSession();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (status === "unauthenticated") {
+      router.push("/");
+    }
+  }, [status, router]);
+
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [streamingMessage, setStreamingMessage] = useState("");
@@ -41,29 +46,18 @@ export default function ChatClient({ user }: Props) {
     const SpeechRecognition =
       (window as any).SpeechRecognition ||
       (window as any).webkitSpeechRecognition;
-
-    if (!SpeechRecognition) {
-      alert("Speech recognition not supported.");
-      return;
-    }
-
+    if (!SpeechRecognition) return alert("Speech recognition not supported.");
     const recognition = new SpeechRecognition();
     recognition.lang = "en-US";
     recognition.interimResults = true;
-
     recognition.onstart = () => {
       setIsListening(true);
       setInterimTranscript("");
     };
-
-    recognition.onend = () => {
-      setIsListening(false);
-    };
-
+    recognition.onend = () => setIsListening(false);
     recognition.onresult = (event: any) => {
-      let finalTranscript = "";
-      let interim = "";
-
+      let finalTranscript = "",
+        interim = "";
       for (let i = event.resultIndex; i < event.results.length; i++) {
         const transcript = event.results[i][0].transcript;
         if (event.results[i].isFinal) {
@@ -72,26 +66,21 @@ export default function ChatClient({ user }: Props) {
           interim += transcript;
         }
       }
-
       if (finalTranscript) {
         setInput(finalTranscript);
         sendMessage(finalTranscript);
-      } else {
-        setInterimTranscript(interim);
-      }
+      } else setInterimTranscript(interim);
     };
-
     recognition.start();
   };
 
   const sendMessage = async (value?: string) => {
-    const content = value ?? input;
-    if (!content.trim()) return;
+    const content = (value ?? input)?.toString().trim();
+    if (!content) return;
 
     const emotion = analyzeEmotion(content);
-    const userKey = user?.email || "guest";
+    const userKey = session?.user?.email || "guest"; // use session user email
     const logs = JSON.parse(localStorage.getItem("emotionLogs") || "{}");
-
     localStorage.setItem(
       "emotionLogs",
       JSON.stringify({
@@ -100,10 +89,7 @@ export default function ChatClient({ user }: Props) {
       })
     );
 
-    if (checkForCrisis(content)) {
-      setCrisisDetected(true);
-      return;
-    }
+    if (checkForCrisis(content)) return setCrisisDetected(true);
     setCrisisDetected(false);
 
     const systemPrompt: Message = {
@@ -156,101 +142,49 @@ export default function ChatClient({ user }: Props) {
     speakText(fullText);
   };
 
+  if (status === "loading") {
+    return (
+      <main className="flex items-center justify-center min-h-screen bg-gradient-to-br from-[#0f172a] to-[#1e293b] text-white">
+        <p>Loading...</p>
+      </main>
+    );
+  }
+
   return (
-    <main className="min-h-screen bg-gradient-to-br from-[#0f172a] to-[#1e293b] text-white flex flex-col items-center px-4 py-6">
+    <main className="min-h-screen bg-gradient-to-br from-[#0f172a] to-[#1e293b] text-white flex flex-col items-center px-4 py-6 relative">
+      {/* 🔓 Logout Button */}
+      <button
+        onClick={() => signOut({ callbackUrl: "/" })}
+        className="absolute top-4 right-4 bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+      >
+        Logout
+      </button>
+
       <div className="w-full max-w-3xl space-y-6">
+        <div className="text-center mb-4">
+          <h2 className="text-xl font-semibold">
+            Welcome, {session?.user?.name || "Guest"} (
+            {session?.user?.email || "No email"})
+          </h2>
+        </div>
+
         <h1 className="text-3xl font-bold text-center">🧠 YECO</h1>
-
-        {crisisDetected && (
-          <div className="bg-red-600 text-white text-sm px-4 py-3 rounded-lg">
-            🚨 Crisis detected! Please seek immediate professional help or
-            contact a helpline.
-          </div>
-        )}
-
-        <div className="bg-gray-800 rounded-xl h-[400px] overflow-y-auto p-4 space-y-3 shadow-lg">
-          {messages
-            .filter((m) => m.role !== "system")
-            .map((msg, idx) => (
-              <div
-                key={idx}
-                className={`text-sm p-2 rounded-md ${
-                  msg.role === "user"
-                    ? "bg-blue-700/30 self-end"
-                    : "bg-green-700/30 self-start"
-                }`}
-              >
-                <span className="block font-semibold">
-                  {msg.role === "user" ? "You" : "AI"}
-                </span>
-                <span>{msg.content}</span>
-              </div>
-            ))}
-          {isStreaming && (
-            <div className="text-green-400 animate-pulse">
-              <strong>YECO:</strong> {streamingMessage}
-            </div>
-          )}
-        </div>
-
-        <div className="flex items-center gap-2">
-          <input
-            type="text"
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            placeholder="Share your thoughts..."
-            className="flex-grow px-4 py-2 bg-gray-700 text-white rounded-lg border border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
-
-          <button
-            onClick={() => sendMessage()}
-            className="bg-blue-600 p-2 rounded-lg hover:bg-blue-700 transition"
-            title="Send"
-          >
-            <Send size={20} />
-          </button>
-
-          <button
-            onClick={startVoiceInput}
-            className={`p-2 rounded-lg transition ${
-              isListening
-                ? "bg-red-600 animate-pulse"
-                : "bg-gray-600 hover:bg-gray-500"
-            }`}
-            title="Voice input"
-          >
-            <Mic size={20} className={isListening ? "animate-bounce" : ""} />
-          </button>
-
-          <button
-            onClick={() => setSpeakEnabled(!speakEnabled)}
-            className={`p-2 rounded-lg transition ${
-              speakEnabled
-                ? "bg-yellow-600 hover:bg-yellow-500"
-                : "bg-gray-600 hover:bg-gray-500"
-            }`}
-            title="Toggle Voice Output"
-          >
-            <Volume2 size={20} />
-          </button>
-
-          <Link href="/mood" passHref legacyBehavior>
-            <a
-              target="_blank"
-              rel="noopener noreferrer"
-              className="p-2 rounded-lg bg-gray-600 hover:bg-gray-500 transition"
-              title="View Mood Graph"
-            >
-              <BarChart2 size={20} />
-            </a>
-          </Link>
-        </div>
-
-        {isListening && (
-          <p className="text-sm text-blue-300 mt-2 animate-pulse">
-            🎙️ Listening... <span className="italic">{interimTranscript}</span>
-          </p>
-        )}
+        {crisisDetected && <CrisisAlert />}
+        <ChatBox
+          messages={messages}
+          streamingMessage={streamingMessage}
+          isStreaming={isStreaming}
+        />
+        <ChatInput
+          input={input}
+          setInput={setInput}
+          sendMessage={() => sendMessage()}
+          startVoiceInput={startVoiceInput}
+          isListening={isListening}
+          interimTranscript={interimTranscript}
+          speakEnabled={speakEnabled}
+          setSpeakEnabled={setSpeakEnabled}
+        />
       </div>
     </main>
   );
