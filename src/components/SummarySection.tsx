@@ -1,5 +1,6 @@
 "use client";
 import React from "react";
+import { ChevronDown, ChevronRight } from "lucide-react";
 
 type SummarySectionProps = {
   title: string;
@@ -22,7 +23,6 @@ export default function SummarySection({
   selectedDate,
   setSelectedDate,
 }: SummarySectionProps) {
-  // For hourly mood only: filter by selectedDate
   const isHourly = title.includes("Hourly");
   const filteredData =
     isHourly && selectedDate
@@ -32,12 +32,17 @@ export default function SummarySection({
   return (
     <div className="bg-gray-800 p-4 rounded-xl shadow-md">
       <div className="flex justify-between items-center mb-4">
-        <h2 className="text-xl font-semibold">{title}</h2>
+        <h2 className="text-xl font-semibold text-white">{title}</h2>
         <button
           onClick={toggleSection}
-          className="bg-yellow-500 text-black px-3 py-1 rounded hover:bg-yellow-600"
+          className="p-2 rounded-full bg-yellow-500 hover:bg-yellow-600 transition-colors shadow-lg focus:outline-none focus:ring-2 focus:ring-yellow-400"
+          title={visible ? "Collapse" : "Expand"}
         >
-          {visible ? "Collapse" : "Expand"}
+          {visible ? (
+            <ChevronDown className="w-5 h-5 text-black" />
+          ) : (
+            <ChevronRight className="w-5 h-5 text-black" />
+          )}
         </button>
       </div>
 
@@ -54,9 +59,12 @@ export default function SummarySection({
       )}
 
       {visible && (
-        <ul className="space-y-2">
+        <ul className="space-y-2 text-white">
           {filteredData.map((item, index) => (
-            <li key={index} className="flex justify-between">
+            <li
+              key={index}
+              className="flex justify-between border-b border-gray-600 pb-1"
+            >
               <span>{item.label}</span>
               <span className="font-bold">{item.avg}</span>
             </li>

@@ -120,3 +120,27 @@
     @apply bg-background text-foreground;
   }
 }
+/* Custom scrollbar */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px; /* make it thin */
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent; /* no ugly track */
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background-color: #555; /* grey thumb */
+  border-radius: 8px; /* rounded thumb */
+  border: 1px solid #333; /* optional border */
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background-color: #777; /* lighter on hover */
+}
+
+/* For Firefox */
+.custom-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: #555 transparent;
+}

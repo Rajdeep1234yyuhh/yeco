@@ -6,7 +6,7 @@ import { useSession, signOut } from "next-auth/react"; // ⬅️ Updated line
 import { useRouter } from "next/navigation";
 
 import { analyzeEmotion } from "../utils/emotionAnalysis";
-import { checkForCrisis } from "../panic_words";
+import { checkForCrisis } from "../utils/panic_words";
 import ChatBox from "../../components/ChatBox";
 import ChatInput from "../../components/ChatInput";
 import CrisisAlert from "../../components/CrisisAlert";

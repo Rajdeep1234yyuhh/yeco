@@ -1,6 +1,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client"; // Mark as a client component
 
+import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import GraphSection from "../../components/GraphSection";
 import SummarySection from "../../components/SummarySection";
@@ -13,10 +15,10 @@ export default function MoodTrends() {
   const [dailyData, setDailyData] = useState<DailyMood[]>([]);
   const [weeklyData, setWeeklyData] = useState<WeeklyMood[]>([]);
   const [hourlyData, setHourlyData] = useState<HourlyMood[]>([]);
-  const [showGraph, setShowGraph] = useState(false);
+  const [showGraph, setShowGraph] = useState(true);
   const [visibleSections, setVisibleSections] = useState({
-    daily: true,
-    weekly: true,
+    daily: false,
+    weekly: false,
     hourly: true,
   });
   const today = new Date().toISOString().split("T")[0];
@@ -91,24 +93,56 @@ export default function MoodTrends() {
     setHourlyData(hourlyAvg);
   }, []);
 
-  {
-    /*const filteredHourlyData = selectedDate
-     ? hourlyData.filter((h) => h.date === selectedDate)
-     : hourlyData;*/
+  const { data: session, status } = useSession();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (status === "unauthenticated") {
+      router.push("/");
+    }
+  }, [status, router]);
+
+  if (status === "loading") {
+    return <div className="p-6 text-white">Checking authentication...</div>;
+  }
+
+  if (!session) {
+    return null;
   }
 
   return (
-    <div className="p-6 space-y-6 bg-gray-900 text-white min-h-screen">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">📊 Mood Trends</h1>
+    <div className="p-6 space-y-8 bg-gray-900 text-white min-h-screen">
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="text-3xl font-bold">📊 Mood Trends</h1>
+        <div className="flex items-center space-x-2">
+          <span className="text-xl">{showGraph ? "📈" : "📝"}</span>
+          <label className="relative inline-flex items-center cursor-pointer">
+            <input
+              type="checkbox"
+              checked={showGraph}
+              onChange={() => setShowGraph(!showGraph)}
+              className="sr-only peer"
+            />
+            <div className="w-11 h-6 bg-gray-600 rounded-full peer peer-checked:bg-blue-600 transition-all duration-300"></div>
+            <div className="absolute left-1 top-1 w-4 h-4 bg-white rounded-full transition-transform duration-300 transform peer-checked:translate-x-5"></div>
+          </label>
+        </div>
+      </div>
+      {/* Navigation Buttons */}
+      <div className="flex justify-center gap-4 mt-10">
         <button
-          onClick={() => setShowGraph(!showGraph)}
-          className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+          onClick={() => router.push("/")}
+          className="px-4 py-2 bg-blue-600 rounded-xl hover:bg-blue-700 transition-colors"
         >
-          {showGraph ? "📝 Show List View" : "📈 Show Graph View"}
+          🏠 Go to Homepage
+        </button>
+        <button
+          onClick={() => router.push("/bot")}
+          className="px-4 py-2 bg-green-600 rounded-xl hover:bg-green-700 transition-colors"
+        >
+          🤖 Go to Image Bot
         </button>
       </div>
-
       {showGraph ? (
         <>
           <GraphSection
@@ -125,7 +159,7 @@ export default function MoodTrends() {
           />
           <GraphSection
             title="📅 Daily Mood"
-            data={dailyData.map((d) => ({ label: d.date, avg: d.avg }))} // Include label and avg
+            data={dailyData.map((d) => ({ label: d.date, avg: d.avg }))}
             visible={visibleSections.daily}
             toggleSection={() => toggleSection("daily")}
             selectedDate={selectedDate}
@@ -133,7 +167,7 @@ export default function MoodTrends() {
           />
           <GraphSection
             title="📆 Weekly Mood"
-            data={weeklyData.map((w) => ({ label: w.week, avg: w.avg }))} // Include label and avg
+            data={weeklyData.map((w) => ({ label: w.week, avg: w.avg }))}
             visible={visibleSections.weekly}
             toggleSection={() => toggleSection("weekly")}
             selectedDate={selectedDate}
