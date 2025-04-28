@@ -98,19 +98,26 @@ const ExerciseChart = ({ graphData }: ExerciseChartProps) => {
             const improvementResult = dataset.improvementResults?.[dataIndex];
 
             let label = `Score: ${score}`;
-            if (emotion === "exercise_suggestion" && exercise) {
-              label += `, Exercise: ${exercise}`;
-            }
-            if (emotion === "improvement_check" && improvementResult) {
+
+            if (improvementResult) {
               label += `, ${improvementResult}`;
             }
+
+            if (exercise) {
+              label += `, Exercise: ${exercise}`;
+            }
+
             if (
               emotion &&
-              emotion !== "exercise_suggestion" &&
-              emotion !== "improvement_check"
+              ![
+                "exercise_suggestion",
+                "improvement_check",
+                "retry_exercise",
+              ].includes(emotion)
             ) {
               label += `, Emotion: ${emotion}`;
             }
+
             return label;
           },
         },

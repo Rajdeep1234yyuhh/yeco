@@ -113,14 +113,30 @@ const ExerciseSuggestion = () => {
       }
 
       if (exercise) {
+        // check if already exists for this date
+        let existingEntry = mergedData.find((d) => d.date === date);
+
+        if (!existingEntry) {
+          existingEntry = {
+            date,
+            score: exercise.score,
+          };
+          mergedData.push(existingEntry);
+        }
+
+        existingEntry.exercise = exercise.exercise;
+        existingEntry.emotion = "exercise_suggestion";
+      } else {
+        // if no exercise, just add normal mood
         mergedData.push({
           date,
-          score: exercise.score,
-          emotion: "exercise_suggestion",
-          exercise: exercise.exercise,
+          score: parseFloat(avgScore.toFixed(2)),
+          emotion: scoreToEmotion(avgScore),
         });
+      }
 
-        // 👇 Now check 3 days after exercise
+      // Check improvement 3 days later
+      if (exercise) {
         const targetDate = new Date(date);
         targetDate.setDate(targetDate.getDate() + 3);
         const targetDateStr = targetDate.toISOString().split("T")[0];
@@ -133,64 +149,49 @@ const ExerciseSuggestion = () => {
             groupedScores[targetDateStr].reduce((a, b) => a + b, 0) /
             groupedScores[targetDateStr].length;
 
+          let existingFutureEntry = mergedData.find(
+            (d) => d.date === targetDateStr
+          );
+
+          if (!existingFutureEntry) {
+            existingFutureEntry = {
+              date: targetDateStr,
+              score: parseFloat(futureAvgScore.toFixed(2)),
+            };
+            mergedData.push(existingFutureEntry);
+          }
+
           const improved = futureAvgScore > exercise.score;
-          mergedData.push({
-            date: targetDateStr,
-            score: parseFloat(futureAvgScore.toFixed(2)),
-            emotion: "improvement_check",
-            improvementCheck: true,
-            improvementResult: improved
-              ? "Mood Improved ✅"
-              : "Mood Not Improved ❌",
-          });
-          const improvementEntry: GraphData = {
-            date: targetDateStr,
-            score: parseFloat(futureAvgScore.toFixed(2)),
-            emotion: "improvement_check",
-            improvementCheck: true,
-            improvementResult: improved
-              ? "Mood Improved ✅"
-              : "Mood Not Improved ❌",
-          };
+          existingFutureEntry.improvementCheck = true;
+          existingFutureEntry.improvementResult = improved
+            ? "Mood Improved ✅"
+            : "Mood Not Improved ❌";
+
           if (!improved) {
-            const newExercise = "Try a mindfulness session for 5 minutes"; // 💡 Or generate based on mood, see below
+            const newExercise = "Try a mindfulness session for 5 minutes"; // 💡 You can customize
+
+            existingFutureEntry.exercise = newExercise;
+            existingFutureEntry.emotion = "retry_exercise";
+
             const newEntry: ExerciseEntry = {
               score: parseFloat(futureAvgScore.toFixed(2)),
               exercise: newExercise,
               timestamp: new Date(targetDateStr).toISOString(),
               emotion: "retry",
             };
-            improvementEntry.exerciseSuggestion = generateNewExercise(
-              improvementEntry.score
-            );
 
-            // Update localStorage
             const updatedSuggestions = [...exerciseSuggestions, newEntry];
             localStorage.setItem(
               "exerciseSuggestions",
               JSON.stringify(updatedSuggestions)
             );
-
-            // Update merged graph
-            mergedData.push({
-              date: targetDateStr,
-              score: parseFloat(futureAvgScore.toFixed(2)),
-              emotion: "retry_exercise",
-              exercise: newExercise,
-              improvementResult: "Mood Not Improved ❌", // optional
-              improvementCheck: true, // optional
-              exerciseSuggestion: generateNewExercise(
-                parseFloat(futureAvgScore.toFixed(2))
-              ),
-            });
+          } else {
+            // only set emotion if not already retry_exercise
+            if (!existingFutureEntry.emotion) {
+              existingFutureEntry.emotion = "improvement_check";
+            }
           }
         }
-      } else {
-        mergedData.push({
-          date,
-          score: parseFloat(avgScore.toFixed(2)),
-          emotion: scoreToEmotion(avgScore),
-        });
       }
     });
 
