@@ -34,27 +34,25 @@ const ExerciseChart = ({ graphData }: ExerciseChartProps) => {
       {
         label: "Mood Score",
         data: graphData.map((entry) => entry.score),
-        borderColor: "#10B981", // Line color
+        borderColor: "#10B981",
         backgroundColor: graphData.map(
-          (entry) =>
-            entry.emotion === "exercise_suggestion" ? "#FBBF24" : "#6EE7B7" // Yellow for exercise
+          (entry) => (entry.exercise ? "#F97316" : "#6EE7B7") // 🟠 Orange for exercise, teal otherwise
         ),
-        pointBackgroundColor: graphData.map(
-          (entry) =>
-            entry.emotion === "exercise_suggestion" ? "#FBBF24" : "#10B981" // Yellow for exercise
+        pointBackgroundColor: graphData.map((entry) =>
+          entry.exercise ? "#F97316" : "#10B981"
         ),
-        pointBorderColor: graphData.map(
-          (entry) =>
-            entry.emotion === "exercise_suggestion" ? "#F59E0B" : "#10B981" // Slightly dark yellow
+        pointBorderColor: graphData.map((entry) =>
+          entry.exercise ? "#F59E0B" : "#10B981"
         ),
-        pointRadius: graphData.map(
-          (entry) => (entry.emotion === "exercise_suggestion" ? 10 : 6) // Bigger if exercise
-        ),
-        pointStyle: graphData.map((entry) =>
-          entry.emotion === "exercise_suggestion" ? "star" : "circle"
+        pointRadius: graphData.map((entry) => (entry.exercise ? 8 : 6)),
+        pointStyle: graphData.map(
+          (entry) => (entry.exercise ? "rectRounded" : "circle") // 📍 Different shape for exercise points
         ),
         fill: false,
         tension: 0.4,
+        // 👇 Pass extra fields manually here
+        emotions: graphData.map((entry) => entry.emotion || ""),
+        exercises: graphData.map((entry) => entry.exercise || ""),
       },
     ],
   };
@@ -64,9 +62,7 @@ const ExerciseChart = ({ graphData }: ExerciseChartProps) => {
       y: {
         min: -10,
         max: 10,
-        ticks: {
-          stepSize: 2,
-        },
+        ticks: { stepSize: 2 },
       },
     },
     plugins: {
