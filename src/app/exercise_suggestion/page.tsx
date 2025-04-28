@@ -19,15 +19,37 @@ type ExerciseEntry = {
   emotion?: string; // Added emotion property
 };
 
+type GraphData = {
+  date: string;
+  score: number;
+  emotion?: string;
+  exercise?: string;
+  improvementResult?: string;
+  improvementCheck?: boolean;
+  exerciseSuggestion?: string; // 🛠️ ADD this line
+};
+
+const generateNewExercise = (score: number): string => {
+  if (score <= -6) {
+    return "Practice 5 minutes of mindful breathing";
+  } else if (score <= -2) {
+    return "Take a relaxing walk in nature";
+  } else if (score <= 1) {
+    return "Write down 3 positive things about today";
+  } else if (score <= 5) {
+    return "Do a light 10-minute stretching routine";
+  } else {
+    return "Celebrate your progress with a relaxing activity you enjoy";
+  }
+};
+
 const ExerciseSuggestion = () => {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const { data: session, status } = useSession();
   const router = useRouter();
   const [suggestion, setSuggestion] = useState("");
   const [exerciseLogs, setExerciseLogs] = useState<ExerciseEntry[]>([]);
-  const [graphData, setGraphData] = useState<
-    { date: string; score: number; emotion?: string; exercise?: string }[]
-  >([]);
+  const [graphData, setGraphData] = useState<GraphData[]>([]);
 
   useEffect(() => {
     if (status === "unauthenticated") {
@@ -128,6 +150,47 @@ const ExerciseSuggestion = () => {
               ? "Mood Improved ✅"
               : "Mood Not Improved ❌",
           });
+          const improvementEntry: GraphData = {
+            date: targetDateStr,
+            score: parseFloat(futureAvgScore.toFixed(2)),
+            emotion: "improvement_check",
+            improvementCheck: true,
+            improvementResult: improved
+              ? "Mood Improved ✅"
+              : "Mood Not Improved ❌",
+          };
+          if (!improved) {
+            const newExercise = "Try a mindfulness session for 5 minutes"; // 💡 Or generate based on mood, see below
+            const newEntry: ExerciseEntry = {
+              score: parseFloat(futureAvgScore.toFixed(2)),
+              exercise: newExercise,
+              timestamp: new Date(targetDateStr).toISOString(),
+              emotion: "retry",
+            };
+            improvementEntry.exerciseSuggestion = generateNewExercise(
+              improvementEntry.score
+            );
+
+            // Update localStorage
+            const updatedSuggestions = [...exerciseSuggestions, newEntry];
+            localStorage.setItem(
+              "exerciseSuggestions",
+              JSON.stringify(updatedSuggestions)
+            );
+
+            // Update merged graph
+            mergedData.push({
+              date: targetDateStr,
+              score: parseFloat(futureAvgScore.toFixed(2)),
+              emotion: "retry_exercise",
+              exercise: newExercise,
+              improvementResult: "Mood Not Improved ❌", // optional
+              improvementCheck: true, // optional
+              exerciseSuggestion: generateNewExercise(
+                parseFloat(futureAvgScore.toFixed(2))
+              ),
+            });
+          }
         }
       } else {
         mergedData.push({
