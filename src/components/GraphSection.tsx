@@ -72,7 +72,7 @@ export default function GraphSection({
         <ResponsiveContainer width="100%" height={300}>
           <LineChart data={filteredData}>
             <CartesianGrid strokeDasharray="3 3" />
-            <XAxis reversed dataKey="label" />
+            <XAxis dataKey="label" />
             <YAxis domain={[0, 1]} />
             <Tooltip />
             <Line
