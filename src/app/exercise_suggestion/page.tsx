@@ -101,14 +101,7 @@ const ExerciseSuggestion = () => {
       ...Object.keys(exerciseLogsByDate),
     ]);
 
-    const mergedData: {
-      date: string;
-      score: number;
-      emotion?: string;
-      exercise?: string;
-      improvementCheck?: boolean; // 👈 new field
-      improvementResult?: string; // 👈 new field
-    }[] = [];
+    const mergedData: GraphData[] = [];
 
     allDates.forEach((date) => {
       const scores = groupedScores[date] || [];
@@ -274,7 +267,6 @@ const ExerciseSuggestion = () => {
     }
 
     const timestamp = new Date().toISOString();
-    const todayDateString = new Date().toISOString().split("T")[0];
 
     // 🎯 Use avgScore here
     const newEntry: ExerciseEntry = {
