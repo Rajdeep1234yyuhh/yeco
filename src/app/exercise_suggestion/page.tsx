@@ -20,6 +20,7 @@ type ExerciseEntry = {
 };
 
 const ExerciseSuggestion = () => {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const { data: session, status } = useSession();
   const router = useRouter();
   const [suggestion, setSuggestion] = useState("");
@@ -67,11 +68,10 @@ const ExerciseSuggestion = () => {
       localStorage.getItem("exerciseSuggestions") || "[]"
     );
 
-    // Build exercise logs
     const exerciseLogsByDate: { [date: string]: ExerciseEntry } = {};
     exerciseSuggestions.forEach((ex: ExerciseEntry) => {
       const exDate = new Date(ex.timestamp).toISOString().split("T")[0];
-      exerciseLogsByDate[exDate] = ex; // if multiple exercises, last one wins
+      exerciseLogsByDate[exDate] = ex;
     });
 
     const allDates = new Set([
@@ -84,6 +84,8 @@ const ExerciseSuggestion = () => {
       score: number;
       emotion?: string;
       exercise?: string;
+      improvementCheck?: boolean; // 👈 new field
+      improvementResult?: string; // 👈 new field
     }[] = [];
 
     allDates.forEach((date) => {
@@ -96,13 +98,37 @@ const ExerciseSuggestion = () => {
       }
 
       if (exercise) {
-        // If exercise exists for this date, we prioritize it
         mergedData.push({
           date,
           score: exercise.score,
           emotion: "exercise_suggestion",
           exercise: exercise.exercise,
         });
+
+        // 👇 Now check 3 days after exercise
+        const targetDate = new Date(date);
+        targetDate.setDate(targetDate.getDate() + 3);
+        const targetDateStr = targetDate.toISOString().split("T")[0];
+
+        if (
+          groupedScores[targetDateStr] &&
+          groupedScores[targetDateStr].length > 0
+        ) {
+          const futureAvgScore =
+            groupedScores[targetDateStr].reduce((a, b) => a + b, 0) /
+            groupedScores[targetDateStr].length;
+
+          const improved = futureAvgScore > exercise.score;
+          mergedData.push({
+            date: targetDateStr,
+            score: parseFloat(futureAvgScore.toFixed(2)),
+            emotion: "improvement_check",
+            improvementCheck: true,
+            improvementResult: improved
+              ? "Mood Improved ✅"
+              : "Mood Not Improved ❌",
+          });
+        }
       } else {
         mergedData.push({
           date,
@@ -112,7 +138,6 @@ const ExerciseSuggestion = () => {
       }
     });
 
-    // Sort by date
     mergedData.sort((a, b) => (a.date > b.date ? 1 : -1));
 
     setGraphData(mergedData);
@@ -128,8 +153,37 @@ const ExerciseSuggestion = () => {
       return;
     }
 
-    const lastScores = userScores.slice(-5);
-    const emotionLabels = lastScores.map((entry) =>
+    const today = new Date().toISOString().split("T")[0];
+
+    // Filter only entries before today
+    const previousEntries = userScores.filter((entry) => {
+      const entryDate = new Date(entry.timestamp).toISOString().split("T")[0];
+      return entryDate < today;
+    });
+
+    // Sort by most recent first
+    previousEntries.sort(
+      (a, b) =>
+        new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+    );
+
+    // Pick the last 5 entries before today
+    const lastFiveEntries = previousEntries.slice(0, 5);
+
+    if (!lastFiveEntries.length) {
+      setSuggestion(
+        "No previous emotion data found before today. Please chat more!"
+      );
+      return;
+    }
+
+    // 🎯 Calculate the AVERAGE score
+    const avgScore =
+      lastFiveEntries.reduce((sum, entry) => sum + entry.score, 0) /
+      lastFiveEntries.length;
+
+    // 🎯 Find emotions for those 5 scores
+    const emotionLabels = lastFiveEntries.map((entry) =>
       scoreToEmotion(entry.score)
     );
 
@@ -142,6 +196,7 @@ const ExerciseSuggestion = () => {
     const mostCommonEmotion =
       sortedMoods.length > 0 ? sortedMoods[0][0] : "neutral";
 
+    // 🎯 Decide Exercise based on most common mood
     let exercise = "Take a walk outside for 10 minutes";
     if (mostCommonEmotion === "sad") {
       exercise = "Try deep breathing exercises for 5 minutes";
@@ -155,12 +210,12 @@ const ExerciseSuggestion = () => {
       exercise = "Listen to calming music and relax";
     }
 
-    const latestScore = lastScores[lastScores.length - 1].score;
     const timestamp = new Date().toISOString();
     const todayDateString = new Date().toISOString().split("T")[0];
 
+    // 🎯 Use avgScore here
     const newEntry: ExerciseEntry = {
-      score: latestScore,
+      score: parseFloat(avgScore.toFixed(2)),
       exercise,
       timestamp,
       emotion: mostCommonEmotion,
@@ -174,13 +229,7 @@ const ExerciseSuggestion = () => {
       `Based on your recent mood (${mostCommonEmotion}), we suggest: ${exercise}`
     );
 
-    const newGraphPoint = {
-      date: todayDateString,
-      score: latestScore,
-      emotion: mostCommonEmotion,
-      exercise: exercise,
-    };
-
+    // 🎯 Update graph with avgScore
     setGraphData((prev) => {
       const today = new Date().toISOString().split("T")[0];
 
@@ -188,18 +237,16 @@ const ExerciseSuggestion = () => {
       const existingIndex = updated.findIndex((entry) => entry.date === today);
 
       if (existingIndex !== -1) {
-        // If today's entry exists, update it
         updated[existingIndex] = {
           ...updated[existingIndex],
-          score: latestScore,
+          score: parseFloat(avgScore.toFixed(2)),
           emotion: mostCommonEmotion,
           exercise: exercise,
         };
       } else {
-        // Otherwise add a new entry
         updated.push({
           date: today,
-          score: latestScore,
+          score: parseFloat(avgScore.toFixed(2)),
           emotion: mostCommonEmotion,
           exercise: exercise,
         });

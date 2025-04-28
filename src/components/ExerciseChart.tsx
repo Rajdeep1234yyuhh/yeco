@@ -21,6 +21,8 @@ type GraphData = {
   score: number;
   emotion?: string;
   exercise?: string;
+  improvementResult?: string;
+  improvementCheck?: boolean;
 };
 
 type ExerciseChartProps = {
@@ -35,24 +37,42 @@ const ExerciseChart = ({ graphData }: ExerciseChartProps) => {
         label: "Mood Score",
         data: graphData.map((entry) => entry.score),
         borderColor: "#10B981",
-        backgroundColor: graphData.map(
-          (entry) => (entry.exercise ? "#F97316" : "#6EE7B7") // 🟠 Orange for exercise, teal otherwise
+        backgroundColor: graphData.map((entry) =>
+          entry.improvementCheck
+            ? entry.improvementResult === "Mood Improved ✅"
+              ? "#22C55E"
+              : "#EF4444"
+            : entry.exercise
+            ? "#F97316"
+            : "#6EE7B7"
         ),
         pointBackgroundColor: graphData.map((entry) =>
-          entry.exercise ? "#F97316" : "#10B981"
+          entry.improvementCheck
+            ? entry.improvementResult === "Mood Improved ✅"
+              ? "#22C55E"
+              : "#EF4444"
+            : entry.exercise
+            ? "#F97316"
+            : "#10B981"
         ),
-        pointBorderColor: graphData.map((entry) =>
-          entry.exercise ? "#F59E0B" : "#10B981"
+        pointBorderColor: "#10B981",
+        pointRadius: graphData.map((entry) =>
+          entry.improvementCheck ? 10 : entry.exercise ? 8 : 6
         ),
-        pointRadius: graphData.map((entry) => (entry.exercise ? 8 : 6)),
-        pointStyle: graphData.map(
-          (entry) => (entry.exercise ? "rectRounded" : "circle") // 📍 Different shape for exercise points
+        pointStyle: graphData.map((entry) =>
+          entry.improvementCheck
+            ? "triangle"
+            : entry.exercise
+            ? "rectRounded"
+            : "circle"
         ),
         fill: false,
         tension: 0.4,
-        // 👇 Pass extra fields manually here
         emotions: graphData.map((entry) => entry.emotion || ""),
         exercises: graphData.map((entry) => entry.exercise || ""),
+        improvementResults: graphData.map(
+          (entry) => entry.improvementResult || ""
+        ),
       },
     ],
   };
@@ -68,19 +88,28 @@ const ExerciseChart = ({ graphData }: ExerciseChartProps) => {
     plugins: {
       tooltip: {
         callbacks: {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           label: function (context: any) {
             const dataIndex = context.dataIndex;
             const dataset = context.dataset;
             const score = context.parsed.y;
             const emotion = dataset.emotions?.[dataIndex];
             const exercise = dataset.exercises?.[dataIndex];
+            const improvementResult = dataset.improvementResults?.[dataIndex];
 
             let label = `Score: ${score}`;
-            if (emotion && emotion !== "exercise_suggestion") {
-              label += `, Emotion: ${emotion}`;
-            }
-            if (exercise) {
+            if (emotion === "exercise_suggestion" && exercise) {
               label += `, Exercise: ${exercise}`;
+            }
+            if (emotion === "improvement_check" && improvementResult) {
+              label += `, ${improvementResult}`;
+            }
+            if (
+              emotion &&
+              emotion !== "exercise_suggestion" &&
+              emotion !== "improvement_check"
+            ) {
+              label += `, Emotion: ${emotion}`;
             }
             return label;
           },
