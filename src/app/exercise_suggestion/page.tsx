@@ -17,6 +17,7 @@ type ExerciseEntry = {
   exercise: string;
   timestamp: string;
   emotion?: string; // Added emotion property
+  originalDate?: string;
 };
 
 type GraphData = {
@@ -27,20 +28,6 @@ type GraphData = {
   improvementResult?: string;
   improvementCheck?: boolean;
   exerciseSuggestion?: string; // 🛠️ ADD this line
-};
-
-const generateNewExercise = (score: number): string => {
-  if (score <= -6) {
-    return "Practice 5 minutes of mindful breathing";
-  } else if (score <= -2) {
-    return "Take a relaxing walk in nature";
-  } else if (score <= 1) {
-    return "Write down 3 positive things about today";
-  } else if (score <= 5) {
-    return "Do a light 10-minute stretching routine";
-  } else {
-    return "Celebrate your progress with a relaxing activity you enjoy";
-  }
 };
 
 const ExerciseSuggestion = () => {
@@ -73,6 +60,7 @@ const ExerciseSuggestion = () => {
     if (userScores.length) {
       preloadGraph(userScores);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [exerciseLogs]);
 
   const preloadGraph = (userScores: ScoreEntry[]) => {
@@ -161,7 +149,12 @@ const ExerciseSuggestion = () => {
             mergedData.push(existingFutureEntry);
           }
 
-          const improved = futureAvgScore > exercise.score;
+          const originalDateStr = exercise.originalDate || date;
+          const originalScore =
+            exerciseLogsByDate[originalDateStr]?.score ?? exercise.score;
+
+          const improved = futureAvgScore > originalScore;
+
           existingFutureEntry.improvementCheck = true;
           existingFutureEntry.improvementResult = improved
             ? "Mood Improved ✅"
@@ -289,6 +282,7 @@ const ExerciseSuggestion = () => {
     setGraphData((prev) => {
       const today = new Date().toISOString().split("T")[0];
 
+      // eslint-disable-next-line prefer-const
       let updated = [...prev];
       const existingIndex = updated.findIndex((entry) => entry.date === today);
 

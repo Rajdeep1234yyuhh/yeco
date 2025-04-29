@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client"; // Mark as a client component
 
@@ -69,24 +70,38 @@ export default function MoodTrends() {
       hourly[`${isoDate}_${hourLabel}`].push(log.score);
     });
 
-    const dailyAvg = Object.entries(daily).map(([date, scores]) => ({
-      date,
-      avg: +(scores.reduce((a, b) => a + b, 0) / scores.length).toFixed(2),
-    }));
-
-    const weeklyAvg = Object.entries(weekly).map(([week, scores]) => ({
-      week,
-      avg: +(scores.reduce((a, b) => a + b, 0) / scores.length).toFixed(2),
-    }));
-
-    const hourlyAvg = Object.entries(hourly).map(([key, scores]) => {
-      const [date, hour] = key.split("_");
-      return {
-        hour,
+    const dailyAvg = Object.entries(daily)
+      .map(([date, scores]) => ({
         date,
         avg: +(scores.reduce((a, b) => a + b, 0) / scores.length).toFixed(2),
-      };
-    });
+      }))
+      .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+
+    const weeklyAvg = Object.entries(weekly)
+      .map(([week, scores]) => ({
+        week,
+        avg: +(scores.reduce((a, b) => a + b, 0) / scores.length).toFixed(2),
+      }))
+      .sort((a, b) => {
+        const [wA, mA] = a.week.match(/\d+/g) || [];
+        const [wB, mB] = b.week.match(/\d+/g) || [];
+        return parseInt(wA ?? "0") - parseInt(wB ?? "0");
+      });
+
+    const hourlyAvg = Object.entries(hourly)
+      .map(([key, scores]) => {
+        const [date, hour] = key.split("_");
+        return {
+          hour,
+          date,
+          avg: +(scores.reduce((a, b) => a + b, 0) / scores.length).toFixed(2),
+        };
+      })
+      .sort((a, b) => {
+        const d1 = new Date(`${a.date}T${a.hour}`);
+        const d2 = new Date(`${b.date}T${b.hour}`);
+        return d1.getTime() - d2.getTime();
+      });
 
     setDailyData(dailyAvg);
     setWeeklyData(weeklyAvg);
