@@ -38,7 +38,7 @@ export const authOptions = {
     }),
   ],
   pages: {
-    signIn: "/login", // You can change this to your custom sign-in page if needed
+    signIn: "/", // You can change this to your custom sign-in page if needed
   },
   session: {
     strategy: "jwt" as const,

@@ -46,7 +46,7 @@ export default function SignInPage() {
 
       {/* Now Agent is centered separately below */}
       <div className="mt-10 flex justify-center w-full max-w-4xl">
-        <Agent isLoggedIn={isLoggedIn} />
+        <Agent />
       </div>
     </main>
   );

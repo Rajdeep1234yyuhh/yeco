@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 "use client";
 
 import { useState, useEffect } from "react";
@@ -13,7 +12,6 @@ export default function Assistant() {
   const { data: session } = useSession();
 
   useEffect(() => {
-    // Bot greets the user
     setMessages([
       {
         role: "bot",
@@ -29,99 +27,74 @@ export default function Assistant() {
   const handleSubmit = async () => {
     if (!userInput.trim()) return;
 
-    const inputLower = userInput.toLowerCase();
-
     setMessages((prev) => [...prev, { role: "user", text: userInput }]);
     setUserInput("");
-
-    const isNegative =
-      inputLower.includes("don't") ||
-      inputLower.includes("not") ||
-      inputLower.includes("no");
-
-    if (isNegative) {
-      setMessages((prev) => [
-        ...prev,
-        { role: "bot", text: "👍 Okay, I won't proceed with that." },
-      ]);
-      return;
-    }
-
-    if (
-      inputLower.includes("talk") ||
-      inputLower.includes("support") ||
-      inputLower.includes("chat") ||
-      inputLower.includes("help") ||
-      inputLower.includes("assistant") ||
-      inputLower.includes("ai") ||
-      inputLower.includes("yeeco") ||
-      inputLower.includes("bot")
-    ) {
-      if (!session) {
-        setMessages((prev) => [
-          ...prev,
-          {
-            role: "bot",
-            text: "⚠️ Please login first to access this feature.",
-          },
-        ]);
-        return;
-      }
-      setMessages((prev) => [
-        ...prev,
-        { role: "bot", text: "🔁 Redirecting you to AI Support Chat..." },
-      ]);
-      setTimeout(() => window.open("/bot", "_blank"), 1000);
-      return;
-    }
-
-    if (
-      inputLower.includes("trend") ||
-      inputLower.includes("report") ||
-      inputLower.includes("mood")
-    ) {
-      if (!session) {
-        setMessages((prev) => [
-          ...prev,
-          {
-            role: "bot",
-            text: "⚠️ Please login first to access this feature.",
-          },
-        ]);
-        return;
-      }
-      setMessages((prev) => [
-        ...prev,
-        { role: "bot", text: "🔁 Opening Mood Trends Report..." },
-      ]);
-      setTimeout(() => window.open("/mood", "_blank"), 1000);
-      return;
-    }
-
-    if (
-      inputLower.includes("exercise") ||
-      inputLower.includes("workout") ||
-      inputLower.includes("health")
-    ) {
-      if (!session) {
-        setMessages((prev) => [
-          ...prev,
-          {
-            role: "bot",
-            text: "⚠️ Please login first to access this feature.",
-          },
-        ]);
-        return;
-      }
-      setMessages((prev) => [
-        ...prev,
-        { role: "bot", text: "🔁 Taking you to Mental Health Exercises..." },
-      ]);
-      setTimeout(() => window.open("/exercise_suggestion", "_blank"), 1000);
-      return;
-    }
-
     setLoading(true);
+
+    let detectedIntent: string | null = null;
+
+    try {
+      const intentRes = await fetch("http://localhost:8000/detect_intent", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ query: userInput }),
+      });
+
+      const intentData = await intentRes.json();
+      detectedIntent = intentData.intent;
+    } catch (error) {
+      console.error("Intent detection failed:", error);
+    }
+
+    // if (detectedIntent === "negative") {
+    //   setMessages((prev) => [
+    //     ...prev,
+    //     { role: "bot", text: "👍 Okay, I won't proceed with that." },
+    //   ]);
+    //   setLoading(false);
+    //   return;
+    // }
+
+    if (
+      ["talk_to_ai", "view_mood", "mental_health"].includes(
+        detectedIntent || ""
+      )
+    ) {
+      if (!session) {
+        setMessages((prev) => [
+          ...prev,
+          { role: "bot", text: "🔒 Please login first before continuing." },
+        ]);
+        setLoading(false);
+        return;
+      }
+
+      const redirects: Record<string, string> = {
+        talk_to_ai: "/bot",
+        view_mood: "/mood",
+        mental_health: "/exercise_suggestion",
+      };
+
+      const messagesMap: Record<string, string> = {
+        talk_to_ai: "🤖 🔁 Redirecting you to AI Support Chat...",
+        view_mood: "📊 🔁 Opening Mood Trends Report...",
+        mental_health: "🧘 🔁 Taking you to Mental Health Exercises...",
+      };
+
+      setMessages((prev) => [
+        ...prev,
+        { role: "bot", text: messagesMap[detectedIntent!] },
+      ]);
+
+      // Use setTimeout to allow rendering before opening a new tab
+      setTimeout(() => {
+        window.open(redirects[detectedIntent!], "_blank");
+      }, 500);
+
+      setLoading(false);
+      return;
+    }
+
     try {
       const res = await fetch("http://localhost:8000/ask", {
         method: "POST",
@@ -129,27 +102,27 @@ export default function Assistant() {
         headers: { "Content-Type": "application/json" },
       });
 
-      if (!res.ok) {
-        throw new Error(`HTTP error! Status: ${res.status}`);
-      }
-
+      if (!res.ok) throw new Error(`HTTP error! Status: ${res.status}`);
       const data = await res.json();
-      setMessages((prev) => [...prev, { role: "bot", text: data.answer }]);
-    } catch (error) {
+      const { answer, intent } = data;
+
+      const displayAnswer = intent
+        ? `${answer} \n\n🧠 Detected intent: ${intent}`
+        : answer;
+
+      setMessages((prev) => [...prev, { role: "bot", text: displayAnswer }]);
+    } catch (err) {
       setMessages((prev) => [
         ...prev,
-        {
-          role: "bot",
-          text: "⚠️ Sorry, something went wrong. Please try again.",
-        },
+        { role: "bot", text: "⚠️ Something went wrong. Please try again." },
       ]);
     }
+
     setLoading(false);
   };
 
   return (
     <div className="w-full max-w-2xl bg-gray-800 p-6 rounded-xl shadow-md text-white flex flex-col h-[60vh]">
-      {/* Messages area */}
       <div className="flex-1 overflow-y-auto space-y-4 mb-6 pr-2 custom-scrollbar">
         {messages.map((msg, index) => (
           <div
@@ -171,7 +144,6 @@ export default function Assistant() {
         ))}
       </div>
 
-      {/* Quick suggestions */}
       <div className="flex flex-wrap gap-2 mb-4">
         <button
           onClick={() => handleSuggestionClick("I want to talk to AI Support")}
@@ -197,7 +169,6 @@ export default function Assistant() {
         </button>
       </div>
 
-      {/* Input box */}
       <div className="flex gap-2">
         <input
           type="text"
