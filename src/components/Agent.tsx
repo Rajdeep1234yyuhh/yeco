@@ -111,6 +111,7 @@ export default function Assistant() {
         : answer;
 
       setMessages((prev) => [...prev, { role: "bot", text: displayAnswer }]);
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (err) {
       setMessages((prev) => [
         ...prev,
