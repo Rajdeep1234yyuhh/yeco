@@ -12,7 +12,7 @@ export default function SignInPage() {
   return (
     <>
       <Navbar />
-      <main className="flex flex-col items-center pt-20 min-h-screen bg-gradient-to-br from-gray-900 to-gray-800 text-white p-4">
+      <main className="flex flex-col items-center pt-25 min-h-screen bg-gradient-to-br from-gray-900 to-gray-800 text-white p-4">
         <div className="text-center space-y-4 w-full max-w-4xl">
           {status === "loading" ? (
             <p>Loading...</p>

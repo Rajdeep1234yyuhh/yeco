@@ -15,7 +15,7 @@ export default function Assistant() {
     setMessages([
       {
         role: "bot",
-        text: "👋 Hi! Welcome to YECO Assistant. How can I help you today?",
+        text: "👋 Hi! Welcome to YECO Assistant. How can I help you today? You can check out suggestions below.",
       },
     ]);
   }, []);
