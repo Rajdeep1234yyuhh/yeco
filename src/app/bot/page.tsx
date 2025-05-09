@@ -2,7 +2,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useSession, signOut } from "next-auth/react"; // ⬅️ Updated line
+import { useSession } from "next-auth/react"; // ⬅️ Updated line
 import { useRouter } from "next/navigation";
 
 import { analyzeEmotion } from "../utils/emotionAnalysis";
@@ -10,6 +10,7 @@ import { checkForCrisis } from "../utils/panic_words";
 import ChatBox from "../../components/ChatBox";
 import ChatInput from "../../components/ChatInput";
 import CrisisAlert from "../../components/CrisisAlert";
+import Navbar from "@/components/Nav";
 
 export type Message = {
   role: "user" | "assistant" | "system";
@@ -151,41 +152,33 @@ export default function ChatClient() {
   }
 
   return (
-    <main className="min-h-screen bg-gradient-to-br from-[#0f172a] to-[#1e293b] text-white flex flex-col items-center px-4 py-6 relative">
-      {/* 🔓 Logout Button */}
-      <button
-        onClick={() => signOut({ callbackUrl: "/" })}
-        className="absolute top-4 right-4 bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
-      >
-        Logout
-      </button>
-
-      <div className="w-full max-w-3xl space-y-6">
-        <div className="text-center mb-4">
-          <h2 className="text-xl font-semibold">
-            Welcome, {session?.user?.name || "Guest"} (
-            {session?.user?.email || "No email"})
-          </h2>
+    <>
+      <Navbar />
+      <main className="min-h-screen bg-gradient-to-br from-[#0f172a] to-[#1e293b] text-white flex flex-col items-center px-4 py-20 relative">
+        <div className="w-full max-w-3xl space-y-6">
+          <div className="text-center mb-8 mt-4">
+            <h2 className="text-xl font-semibold">
+              Welcome to YECO&apos;s assistant chat!{" "}
+            </h2>
+          </div>
+          {crisisDetected && <CrisisAlert />}
+          <ChatBox
+            messages={messages}
+            streamingMessage={streamingMessage}
+            isStreaming={isStreaming}
+          />
+          <ChatInput
+            input={input}
+            setInput={setInput}
+            sendMessage={() => sendMessage()}
+            startVoiceInput={startVoiceInput}
+            isListening={isListening}
+            interimTranscript={interimTranscript}
+            speakEnabled={speakEnabled}
+            setSpeakEnabled={setSpeakEnabled}
+          />
         </div>
-
-        <h1 className="text-3xl font-bold text-center">🧠 YECO</h1>
-        {crisisDetected && <CrisisAlert />}
-        <ChatBox
-          messages={messages}
-          streamingMessage={streamingMessage}
-          isStreaming={isStreaming}
-        />
-        <ChatInput
-          input={input}
-          setInput={setInput}
-          sendMessage={() => sendMessage()}
-          startVoiceInput={startVoiceInput}
-          isListening={isListening}
-          interimTranscript={interimTranscript}
-          speakEnabled={speakEnabled}
-          setSpeakEnabled={setSpeakEnabled}
-        />
-      </div>
-    </main>
+      </main>
+    </>
   );
 }

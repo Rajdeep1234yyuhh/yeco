@@ -145,36 +145,37 @@ export default function Assistant() {
         ))}
       </div>
 
-      <div className="flex flex-wrap gap-2 mb-4">
-        <button
+      {/* Suggestion prompts styled as subtle clickable text */}
+      <div className="flex flex-wrap gap-4 mb-4 text-sm text-white/80">
+        <span
           onClick={() => handleSuggestionClick("I want to talk to AI Support")}
-          className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm"
+          className="cursor-pointer hover:text-white transition-colors"
         >
           🧠 Talk to AI Support
-        </button>
-        <button
+        </span>
+        <span
           onClick={() =>
             handleSuggestionClick("I want to view Mood Trends Reports")
           }
-          className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm"
+          className="cursor-pointer hover:text-white transition-colors"
         >
           📈 View Mood Trends
-        </button>
-        <button
+        </span>
+        <span
           onClick={() =>
             handleSuggestionClick("I want to explore Mental Health Exercises")
           }
-          className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg text-sm"
+          className="cursor-pointer hover:text-white transition-colors"
         >
           🏋️‍♂️ Mental Health Exercises
-        </button>
+        </span>
       </div>
 
       <div className="flex gap-2">
         <input
           type="text"
           placeholder="Type your message..."
-          className="flex-grow px-4 py-2 rounded-lg text-white focus:outline-none"
+          className="flex-grow px-4 py-2 rounded-lg text-white bg-gray-700 focus:outline-none"
           value={userInput}
           onChange={(e) => setUserInput(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && handleSubmit()}

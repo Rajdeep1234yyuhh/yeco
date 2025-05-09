@@ -38,8 +38,8 @@ classifier = pipeline("zero-shot-classification", model="facebook/bart-large-mnl
 # Known intents
 INTENT_LABELS = {
     "talk_to_ai": ["talk to AI", "chat with assistant", "open support chat"],
-    "view_mood": ["mood trends", "mood report", "emotion graph"],
-    "mental_health": ["health exercises", "mental wellness", "daily workouts"],
+    "view_mood": ["mood trends", "mood report", "emotion graph" ,"mood check"],
+    "mental_health": ["health exercises", "mental wellness", "daily workouts","mental activities","mental health"],
     "negative": ["no", "not now", "don't want", "cancel", "stop", "exit"]
 }
 
