@@ -1,13 +1,20 @@
+import React from "react";
+
 type ExerciseButtonProps = {
   onClick: () => void;
+  children?: React.ReactNode;
 };
 
-const ExerciseButton = ({ onClick }: ExerciseButtonProps) => (
+const ExerciseButton = ({
+  onClick,
+  children = "Generate Suggestion",
+}: ExerciseButtonProps) => (
   <button
     onClick={onClick}
-    className="bg-green-500 hover:bg-green-600 text-white font-semibold py-2 px-6 rounded-lg transition-all"
+    className="bg-gray-800 hover:bg-gray-700 text-green-400 font-semibold py-2 px-6 rounded-lg transition-all border border-green-500"
+    type="button"
   >
-    Generate Suggestion
+    {children}
   </button>
 );
 

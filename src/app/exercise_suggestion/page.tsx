@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import ExerciseChart from "../../components/ExerciseChart";
 import ExerciseButton from "../utils/ExerciseButton";
 import ExerciseResult from "../../components/ExerciseResult";
+import Navbar from "../../components/Nav";
 
 type ScoreEntry = {
   score: number;
@@ -62,6 +63,25 @@ const ExerciseSuggestion = () => {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [exerciseLogs]);
+  const getExerciseByEmotion = (emotion: string): string => {
+    switch (emotion) {
+      case "very sad":
+      case "sad":
+        return "Do deep breathing for 5 minutes and write down 3 small positive moments.";
+      case "lonely":
+        return "Reach out to a friend or join a virtual group for 10 minutes.";
+      case "anxious":
+        return "Try a short 5-minute guided meditation or light stretching.";
+      case "neutral":
+        return "Go for a short mindful walk or journal how you feel.";
+      case "happy":
+        return "Reflect on what made you happy today and write it in a gratitude journal.";
+      case "very excited":
+        return "Channel your energy with a creative activity or light physical exercise.";
+      default:
+        return "Take 10 minutes for mindful breathing and self-check-in.";
+    }
+  };
 
   const preloadGraph = (userScores: ScoreEntry[]) => {
     const groupedScores: { [date: string]: number[] } = {};
@@ -161,7 +181,8 @@ const ExerciseSuggestion = () => {
             : "Mood Not Improved ❌";
 
           if (!improved) {
-            const newExercise = "Try a mindfulness session for 5 minutes"; // 💡 You can customize
+            const fallbackEmotion = scoreToEmotion(futureAvgScore); // derive mood from future score
+            const newExercise = getExerciseByEmotion(fallbackEmotion);
 
             existingFutureEntry.exercise = newExercise;
             existingFutureEntry.emotion = "retry_exercise";
@@ -248,16 +269,30 @@ const ExerciseSuggestion = () => {
 
     // 🎯 Decide Exercise based on most common mood
     let exercise = "Take a walk outside for 10 minutes";
-    if (mostCommonEmotion === "sad") {
-      exercise = "Try deep breathing exercises for 5 minutes";
-    } else if (mostCommonEmotion === "angry") {
-      exercise = "Do some light stretching or yoga";
+    if (mostCommonEmotion === "very sad") {
+      exercise =
+        "Every morning, do 5 minutes of slow breathing and write down 3 gentle affirmations.";
+    } else if (mostCommonEmotion === "sad") {
+      exercise =
+        "Practice 5-minute deep breathing and write one thing you're grateful for every day.";
+    } else if (mostCommonEmotion === "lonely") {
+      exercise =
+        "Each day, message a friend or join an online community chat to feel more connected.";
     } else if (mostCommonEmotion === "anxious") {
-      exercise = "Try a short guided meditation session";
-    } else if (mostCommonEmotion === "happy") {
-      exercise = "Keep a gratitude journal today";
+      exercise =
+        "Do a 5-minute guided meditation every morning and jot down your top 3 priorities.";
     } else if (mostCommonEmotion === "neutral") {
-      exercise = "Listen to calming music and relax";
+      exercise =
+        "Start your day with 3 minutes of stretching and end with journaling your thoughts.";
+    } else if (mostCommonEmotion === "happy") {
+      exercise =
+        "Keep a daily gratitude journal and take a mindful walk to maintain your good mood.";
+    } else if (mostCommonEmotion === "very excited") {
+      exercise =
+        "Channel your energy daily into a hobby or creative activity for 15 minutes.";
+    } else {
+      exercise =
+        "Take 10 minutes each day to breathe, stretch, and reflect quietly.";
     }
 
     const timestamp = new Date().toISOString();
@@ -307,22 +342,44 @@ const ExerciseSuggestion = () => {
   };
 
   const scoreToEmotion = (score: number): string => {
-    if (score <= -5) return "very sad";
-    if (score <= -1) return "sad";
-    if (score <= 3) return "anxious";
-    if (score <= 6) return "neutral";
-    if (score <= 8.5) return "happy";
+    if (score <= -7) return "very sad";
+    if (score <= -3) return "sad";
+    if (score <= -1) return "lonely";
+    if (score === 0) return "neutral"; // explicitly handle 0
+    if (score <= 2) return "anxious";
+    if (score <= 5) return "happy";
     return "very excited";
   };
 
   return (
-    <main className="min-h-screen bg-gradient-to-br from-blue-900 to-indigo-950 flex flex-col items-center justify-center text-white p-6">
-      <h1 className="text-3xl font-bold mb-6">🧘 Exercise Suggestion</h1>
+    <>
+      <Navbar />
+      <main className="min-h-screen w-full bg-gradient-to-b from-gray-900 via-gray-800 to-black flex flex-col items-center py-20 px-4 md:px-8 text-gray-100 relative overflow-hidden">
+        {/* Abstract subtle patterns */}
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(76,81,191,0.1)_0%,rgba(0,0,0,0)_70%)]"></div>
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_70%_80%,rgba(76,191,140,0.07)_0%,rgba(0,0,0,0)_70%)]"></div>
 
-      <ExerciseButton onClick={generateSuggestion} />
-      <ExerciseResult suggestion={suggestion} />
-      <ExerciseChart graphData={graphData} />
-    </main>
+        {/* Content container with z-index to appear above background effects */}
+        <div className="z-10 flex flex-col items-center w-full max-w-4xl mx-auto">
+          {/* Exercise suggestion section */}
+          <div className="w-full flex flex-col items-center mb-8">
+            <label className="flex items-center justify-center gap-3 p-3 rounded-lg bg-opacity-20 bg-gradient-to-r from-teal-500/10 to-green-500/10 backdrop-blur-sm border border-teal-500/20 cursor-pointer  max-w-md">
+              <span className="text-l md:text-xl font-medium text-teal-400">
+                Exercise Suggestion
+              </span>
+              <ExerciseButton onClick={generateSuggestion} />
+            </label>
+
+            <ExerciseResult suggestion={suggestion} />
+          </div>
+
+          {/* Chart section */}
+          <div className="w-full ">
+            <ExerciseChart graphData={graphData} />
+          </div>
+        </div>
+      </main>
+    </>
   );
 };
 

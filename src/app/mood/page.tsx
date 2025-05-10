@@ -7,6 +7,8 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import GraphSection from "../../components/GraphSection";
 import SummarySection from "../../components/SummarySection";
+import Navbar from "../../components/Nav";
+import { BarChart, LineChart } from "lucide-react";
 
 type DailyMood = { date: string; avg: number };
 type WeeklyMood = { week: string; avg: number };
@@ -126,99 +128,98 @@ export default function MoodTrends() {
   }
 
   return (
-    <div className="p-6 space-y-8 bg-gray-900 text-white min-h-screen">
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-3xl font-bold">📊 Mood Trends</h1>
-        <div className="flex items-center space-x-2">
-          <span className="text-xl">{showGraph ? "📈" : "📝"}</span>
-          <label className="relative inline-flex items-center cursor-pointer">
-            <input
-              type="checkbox"
-              checked={showGraph}
-              onChange={() => setShowGraph(!showGraph)}
-              className="sr-only peer"
-            />
-            <div className="w-11 h-6 bg-gray-600 rounded-full peer peer-checked:bg-blue-600 transition-all duration-300"></div>
-            <div className="absolute left-1 top-1 w-4 h-4 bg-white rounded-full transition-transform duration-300 transform peer-checked:translate-x-5"></div>
-          </label>
+    <>
+      <Navbar />
+      <div className="pt-20 p-6 space-y-8 bg-gray-900 text-white min-h-screen">
+        <div className="flex items-center gap-3">
+          <h1 className="text-xl font-semibold text-white">Mood Analytics</h1>
+          <div className="flex items-center gap-3 ml-auto">
+            <span className="text-sm font-medium text-slate-300">
+              {showGraph ? "Graph View" : "List View"}
+            </span>
+            <button
+              onClick={() => setShowGraph(!showGraph)}
+              className={`group relative inline-flex h-7 w-14 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-slate-900 ${
+                showGraph ? "bg-blue-500" : "bg-slate-700"
+              }`}
+            >
+              <span className="sr-only">Toggle view mode</span>
+              <span
+                className={`pointer-events-none relative inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
+                  showGraph ? "translate-x-6" : "translate-x-1"
+                }`}
+              >
+                {showGraph ? (
+                  <BarChart className="h-3 w-3 text-blue-500 m-0.5" />
+                ) : (
+                  <LineChart className="h-3 w-3 text-slate-700 m-0.5" />
+                )}
+              </span>
+            </button>
+          </div>
         </div>
+        {showGraph ? (
+          <>
+            <GraphSection
+              title="⏰ Hourly Mood"
+              data={hourlyData.map((h) => ({
+                label: `${h.date} ${h.hour}`,
+                avg: h.avg,
+                date: h.date,
+              }))}
+              visible={visibleSections.hourly}
+              toggleSection={() => toggleSection("hourly")}
+              selectedDate={selectedDate}
+              setSelectedDate={setSelectedDate}
+            />
+            <GraphSection
+              title="📅 Daily Mood"
+              data={dailyData.map((d) => ({ label: d.date, avg: d.avg }))}
+              visible={visibleSections.daily}
+              toggleSection={() => toggleSection("daily")}
+              selectedDate={selectedDate}
+              setSelectedDate={setSelectedDate}
+            />
+            <GraphSection
+              title="📆 Weekly Mood"
+              data={weeklyData.map((w) => ({ label: w.week, avg: w.avg }))}
+              visible={visibleSections.weekly}
+              toggleSection={() => toggleSection("weekly")}
+              selectedDate={selectedDate}
+              setSelectedDate={setSelectedDate}
+            />
+          </>
+        ) : (
+          <>
+            <SummarySection
+              title="⏰ Hourly Mood Summary"
+              data={hourlyData.map((h) => ({
+                label: `${h.date} ${h.hour}`,
+                avg: h.avg,
+                date: h.date,
+              }))}
+              visible={visibleSections.hourly}
+              toggleSection={() => toggleSection("hourly")}
+              selectedDate={selectedDate}
+              setSelectedDate={setSelectedDate}
+            />
+            <SummarySection
+              title="📅 Daily Mood Summary"
+              data={dailyData.map((d) => ({ label: d.date, avg: d.avg }))}
+              visible={visibleSections.daily}
+              toggleSection={() => toggleSection("daily")}
+              selectedDate={selectedDate}
+            />
+            <SummarySection
+              title="📆 Weekly Mood Summary"
+              data={weeklyData.map((w) => ({ label: w.week, avg: w.avg }))}
+              visible={visibleSections.weekly}
+              toggleSection={() => toggleSection("weekly")}
+              selectedDate={selectedDate}
+            />
+          </>
+        )}
       </div>
-      {/* Navigation Buttons */}
-      <div className="flex justify-center gap-4 mt-10">
-        <button
-          onClick={() => router.push("/")}
-          className="px-4 py-2 bg-blue-600 rounded-xl hover:bg-blue-700 transition-colors"
-        >
-          🏠 Go to Homepage
-        </button>
-        <button
-          onClick={() => router.push("/bot")}
-          className="px-4 py-2 bg-green-600 rounded-xl hover:bg-green-700 transition-colors"
-        >
-          🤖 Go to Image Bot
-        </button>
-      </div>
-      {showGraph ? (
-        <>
-          <GraphSection
-            title="⏰ Hourly Mood"
-            data={hourlyData.map((h) => ({
-              label: `${h.date} ${h.hour}`,
-              avg: h.avg,
-              date: h.date,
-            }))}
-            visible={visibleSections.hourly}
-            toggleSection={() => toggleSection("hourly")}
-            selectedDate={selectedDate}
-            setSelectedDate={setSelectedDate}
-          />
-          <GraphSection
-            title="📅 Daily Mood"
-            data={dailyData.map((d) => ({ label: d.date, avg: d.avg }))}
-            visible={visibleSections.daily}
-            toggleSection={() => toggleSection("daily")}
-            selectedDate={selectedDate}
-            setSelectedDate={setSelectedDate}
-          />
-          <GraphSection
-            title="📆 Weekly Mood"
-            data={weeklyData.map((w) => ({ label: w.week, avg: w.avg }))}
-            visible={visibleSections.weekly}
-            toggleSection={() => toggleSection("weekly")}
-            selectedDate={selectedDate}
-            setSelectedDate={setSelectedDate}
-          />
-        </>
-      ) : (
-        <>
-          <SummarySection
-            title="⏰ Hourly Mood Summary"
-            data={hourlyData.map((h) => ({
-              label: `${h.date} ${h.hour}`,
-              avg: h.avg,
-              date: h.date,
-            }))}
-            visible={visibleSections.hourly}
-            toggleSection={() => toggleSection("hourly")}
-            selectedDate={selectedDate}
-            setSelectedDate={setSelectedDate}
-          />
-          <SummarySection
-            title="📅 Daily Mood Summary"
-            data={dailyData.map((d) => ({ label: d.date, avg: d.avg }))}
-            visible={visibleSections.daily}
-            toggleSection={() => toggleSection("daily")}
-            selectedDate={selectedDate}
-          />
-          <SummarySection
-            title="📆 Weekly Mood Summary"
-            data={weeklyData.map((w) => ({ label: w.week, avg: w.avg }))}
-            visible={visibleSections.weekly}
-            toggleSection={() => toggleSection("weekly")}
-            selectedDate={selectedDate}
-          />
-        </>
-      )}
-    </div>
+    </>
   );
 }

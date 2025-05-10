@@ -36,21 +36,21 @@ export default function Navbar() {
             <div className="hidden sm:block">
               <div className="ml-10 flex items-center space-x-6">
                 <a
-                  href="#"
+                  href="/bot"
                   className="px-3 py-2 rounded-md text-sm font-medium hover:bg-gray-800 flex items-center"
                 >
                   <MessageCircle className="w-5 h-5 mr-2" />
                   <span>AI Support</span>
                 </a>
                 <a
-                  href="#"
+                  href="/mood"
                   className="px-3 py-2 rounded-md text-sm font-medium hover:bg-gray-800 flex items-center"
                 >
                   <BarChart2 className="w-5 h-5 mr-2" />
                   <span>Mood Trends</span>
                 </a>
                 <a
-                  href="#"
+                  href="/exercise_suggestion"
                   className="px-3 py-2 rounded-md text-sm font-medium hover:bg-gray-800 flex items-center"
                 >
                   <Brain className="w-5 h-5 mr-2" />
