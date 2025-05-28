@@ -66,20 +66,21 @@ const ExerciseSuggestion = () => {
   const getExerciseByEmotion = (emotion: string): string => {
     switch (emotion) {
       case "very sad":
+        return "Every morning, do 5 minutes of slow breathing and write down 3 gentle affirmations.";
       case "sad":
-        return "Do deep breathing for 5 minutes and write down 3 small positive moments.";
+        return "Practice 5-minute deep breathing and write one thing you're grateful for every day.";
       case "lonely":
-        return "Reach out to a friend or join a virtual group for 10 minutes.";
+        return "Each day, message a friend or join an online community chat to feel more connected.";
       case "anxious":
-        return "Try a short 5-minute guided meditation or light stretching.";
+        return "Do a 5-minute guided meditation every morning and jot down your top 3 priorities.";
       case "neutral":
-        return "Go for a short mindful walk or journal how you feel.";
+        return "Start your day with 3 minutes of stretching and end with journaling your thoughts.";
       case "happy":
-        return "Reflect on what made you happy today and write it in a gratitude journal.";
+        return "Keep a daily gratitude journal and take a mindful walk to maintain your good mood.";
       case "very excited":
-        return "Channel your energy with a creative activity or light physical exercise.";
+        return "Channel your energy daily into a hobby or creative activity for 15 minutes.";
       default:
-        return "Take 10 minutes for mindful breathing and self-check-in.";
+        return "Take 10 minutes each day to breathe, stretch, and reflect quietly.";
     }
   };
 

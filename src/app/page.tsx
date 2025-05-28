@@ -20,8 +20,8 @@ export default function SignInPage() {
             <>
               <p className="text-lg">Hello, {session.user?.name} 👋</p>
               <p className="text-gray-300 max-w-xl mx-auto">
-                I&apos;m your personal mental health assistant. Feel free to ask
-                me anything.I will guide you through your mental health journey.
+                I&apos;m your guide through this platform.Feel free to ask me
+                anything.I will guide you through your mental health journey.
               </p>
             </>
           ) : (

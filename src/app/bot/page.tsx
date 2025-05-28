@@ -95,7 +95,7 @@ export default function ChatClient() {
 
     const systemPrompt: Message = {
       role: "system",
-      content: `You are a compassionate, supportive mental health companion...`,
+      content: `You are a compassionate, supportive mental health companion.Do not provide long explanations or advice. Focus on empathy and understanding. If the user expresses distress, offer support and suggest they seek professional help if needed. Always prioritize the user's emotional well-being.`,
     };
 
     const newMessages: Message[] = [
