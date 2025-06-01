@@ -38,10 +38,7 @@ const ExerciseSuggestion = () => {
   const [exerciseLogs, setExerciseLogs] = useState<ExerciseEntry[]>([]);
   const [graphData, setGraphData] = useState<GraphData[]>([]);
 
-  const email =
-    typeof window !== "undefined"
-      ? localStorage.getItem("currentUserEmail") || "guest"
-      : "guest";
+  const email = session?.user?.email || "guest";
 
   useEffect(() => {
     if (status === "unauthenticated") {

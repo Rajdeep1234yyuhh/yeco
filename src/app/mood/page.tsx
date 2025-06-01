@@ -31,10 +31,21 @@ export default function MoodTrends() {
     setVisibleSections((prev) => ({ ...prev, [section]: !prev[section] }));
   };
 
+  const { data: session, status } = useSession();
+  const router = useRouter();
+
   useEffect(() => {
+    if (status === "unauthenticated") {
+      router.push("/");
+    }
+  }, [status, router]);
+
+  useEffect(() => {
+    if (status !== "authenticated") return;
+
     const raw = JSON.parse(localStorage.getItem("emotionLogs") || "{}");
-    const user = Object.keys(raw)[0] || "guest";
-    const logs = raw[user] || [];
+    const email = session?.user?.email || "guest";
+    const logs = raw[email] || [];
 
     const daily: Record<string, number[]> = {};
     const weekly: Record<string, number[]> = {};
@@ -85,8 +96,8 @@ export default function MoodTrends() {
         avg: +(scores.reduce((a, b) => a + b, 0) / scores.length).toFixed(2),
       }))
       .sort((a, b) => {
-        const [wA, mA] = a.week.match(/\d+/g) || [];
-        const [wB, mB] = b.week.match(/\d+/g) || [];
+        const [wA] = a.week.match(/\d+/g) || [];
+        const [wB] = b.week.match(/\d+/g) || [];
         return parseInt(wA ?? "0") - parseInt(wB ?? "0");
       });
 
@@ -108,16 +119,7 @@ export default function MoodTrends() {
     setDailyData(dailyAvg);
     setWeeklyData(weeklyAvg);
     setHourlyData(hourlyAvg);
-  }, []);
-
-  const { data: session, status } = useSession();
-  const router = useRouter();
-
-  useEffect(() => {
-    if (status === "unauthenticated") {
-      router.push("/");
-    }
-  }, [status, router]);
+  }, [session, status]);
 
   if (status === "loading") {
     return <div className="p-6 text-white">Checking authentication...</div>;
