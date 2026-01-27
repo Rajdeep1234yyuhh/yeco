@@ -112,7 +112,8 @@ export default function ChatClient() {
 
     const res = await fetch("/api/chat", {
       method: "POST",
-      body: JSON.stringify({ model: "yeco", messages: newMessages }),
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ messages: newMessages }),
     });
 
     const reader = res.body?.getReader();

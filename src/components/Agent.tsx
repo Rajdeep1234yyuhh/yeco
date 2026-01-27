@@ -34,7 +34,7 @@ export default function Assistant() {
     let detectedIntent: string | null = null;
 
     try {
-      const intentRes = await fetch("http://localhost:8000/detect_intent", {
+      const intentRes = await fetch("/api/detect-intent", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ query: userInput }),
@@ -96,10 +96,10 @@ export default function Assistant() {
     }
 
     try {
-      const res = await fetch("http://localhost:8000/ask", {
+      const res = await fetch("/api/ask", {
         method: "POST",
-        body: JSON.stringify({ query: userInput }),
         headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ query: userInput }),
       });
 
       if (!res.ok) throw new Error(`HTTP error! Status: ${res.status}`);
