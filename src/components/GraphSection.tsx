@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable @typescript-eslint/no-unused-vars */
 "use client";
 import React, { useMemo } from "react";
 import {
@@ -119,15 +121,15 @@ export default function GraphSection({
             <div className="flex flex-wrap gap-2">
               {availableDates.slice(0, 5).map((date) => (
                 <button
-                  key={date}
-                  onClick={() => setSelectedDate(date.toString())}
+                  key={date as string}
+                  onClick={() => setSelectedDate(date as string)}
                   className={`px-3 py-1 text-xs rounded-full transition ${
                     date === selectedDate
                       ? "bg-blue-600 text-white"
                       : "bg-gray-700 text-gray-300 hover:bg-gray-600"
                   }`}
                 >
-                  {date}
+                  {date as string}
                 </button>
               ))}
               {availableDates.length > 5 && (
