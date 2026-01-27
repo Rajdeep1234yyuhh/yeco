@@ -155,7 +155,7 @@ const ExerciseChart = ({ graphData }: ExerciseChartProps) => {
         labels: {
           color: "#E2E8F0", // Light text color for dark theme
           font: {
-            weight: "500", // Medium font weight
+            weight: "bold" as const, // Medium font weight
           },
           boxWidth: 20,
           padding: 15,
